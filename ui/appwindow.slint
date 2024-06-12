@@ -2,6 +2,7 @@ import { Button, VerticalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
     in-out property<int> counter: 42;
+    callback on_button_pressed(string);
     callback request-increase-value();
     VerticalBox {
         Text {
@@ -11,6 +12,118 @@ export component AppWindow inherits Window {
             text: "Increase value";
             clicked => {
                 root.request-increase-value();
+            }
+        }
+        GridLayout {
+            Row {
+                Button {
+                    text: "C";
+                    clicked => { root.on_button_pressed("C"); }
+                }
+                Button {
+                    text: "(";
+                    clicked => { root.on_button_pressed("("); }
+                }
+                Button {
+                    text: ")";
+                    clicked => { root.on_button_pressed(")"); }
+                }
+                Button {
+                    text: "mod";
+                    clicked => { root.on_button_pressed("mod"); }
+                }
+                Button {
+                    text: "π";
+                    clicked => { root.on_button_pressed("π"); }
+                }
+            }
+            Row {
+                Button {
+                    text: "7";
+                    clicked => { root.on_button_pressed("7"); }
+                }
+                Button {
+                    text: "8";
+                    clicked => { root.on_button_pressed("8"); }
+                }
+                Button {
+                    text: "9";
+                    clicked => { root.on_button_pressed("9"); }
+                }
+                Button {
+                    text: "÷";
+                    clicked => { root.on_button_pressed("÷"); }
+                }
+                Button {
+                    text: "√";
+                    clicked => { root.on_button_pressed("√"); }
+                }
+            }
+            Row {
+                Button {
+                    text: "4";
+                    clicked => { root.on_button_pressed("4"); }
+                }
+                Button {
+                    text: "5";
+                    clicked => { root.on_button_pressed("5"); }
+                }
+                Button {
+                    text: "6";
+                    clicked => { root.on_button_pressed("6"); }
+                }
+                Button {
+                    text: "×";
+                    clicked => { root.on_button_pressed("×"); }
+                }
+                Button {
+                    text: "x²";
+                    clicked => { root.on_button_pressed("x²"); }
+                }
+            }
+            Row {
+                Button {
+                    text: "1";
+                    clicked => { root.on_button_pressed("1"); }
+                }
+                Button {
+                    text: "2";
+                    clicked => { root.on_button_pressed("2"); }
+                }
+                Button {
+                    text: "3";
+                    clicked => { root.on_button_pressed("3"); }
+                }
+                Button {
+                    text: "-";
+                    clicked => { root.on_button_pressed("-"); }
+                }
+                Button {
+                    text: "x³";
+                    clicked => { root.on_button_pressed("x³"); }
+                }
+            }
+            Row {
+                Button {
+                    text: "0";
+                    clicked => { root.on_button_pressed("0"); }
+                }
+                Button {
+                    text: ".";
+                    clicked => { root.on_button_pressed("."); }
+                }
+                Button {
+                    text: "%";
+                    clicked => { root.on_button_pressed("%"); }
+                }
+                Button {
+                    text: "+";
+                    clicked => { root.on_button_pressed("+"); }
+                }
+                Button {
+                    text: "=";
+                    clicked => { root.on_button_pressed("="); }
+                }
             }
         }
     }
