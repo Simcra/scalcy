@@ -25,9 +25,17 @@
           rust-bin.stable.latest.default
         ];
         LD_LIBRARY_PATH = nixpkgs.lib.makeLibraryPath (with pkgs; [
-          wayland
           libxkbcommon
           fontconfig
+
+          # Wayland
+          wayland
+
+          # Xorg/X11
+          xorg.libX11
+          xorg.libXcursor
+          xorg.libXrandr
+          xorg.libXi
         ]);
       };
     };
