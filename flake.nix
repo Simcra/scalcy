@@ -22,7 +22,9 @@
         buildInputs = with pkgs; [
           openssl
           pkg-config
-          rust-bin.stable.latest.default
+          (rust-bin.stable.latest.default.override {
+            extensions = [ "rust-src" ];
+          })
         ];
         LD_LIBRARY_PATH = nixpkgs.lib.makeLibraryPath (with pkgs; [
           libxkbcommon
