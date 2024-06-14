@@ -3,11 +3,19 @@ slint::include_modules!();
 fn main() -> Result<(), slint::PlatformError> {
     let ui = AppWindow::new()?;
 
-    ui.on_request_increase_value({
+    ui.on_button_clicked({
         let ui_handle = ui.as_weak();
-        move || {
+        move |value| {
             let ui = ui_handle.unwrap();
-            ui.set_counter(ui.get_counter() + 1);
+            ui.set_display_value(value);
+        }
+    });
+
+    ui.on_key_pressed({
+        let ui_handle = ui.as_weak();
+        move |value| {
+            let ui = ui_handle.unwrap();
+            ui.set_display_value(value);
         }
     });
 
