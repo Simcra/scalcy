@@ -1,129 +1,52 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    in-out property<int> counter: 42;
-    callback on_button_pressed(string);
-    callback request-increase-value();
+    in-out property<string> display_value: "0";
+    in-out property<string> current_operation: "";
+    in-out property<string> last_result: "0";
+    in-out property<string> last_operation: "";
+
+    callback key_pressed(string);
+    callback button_clicked(string);
+
+    keyboard_handler := FocusScope { key-pressed(event) => { root.key_pressed(event.text); accept } }
     VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
-            }
-        }
+        Text { text: "\{root.display_value}"; }
         GridLayout {
             Row {
-                Button {
-                    text: "C";
-                    clicked => { root.on_button_pressed("C"); }
-                }
-                Button {
-                    text: "(";
-                    clicked => { root.on_button_pressed("("); }
-                }
-                Button {
-                    text: ")";
-                    clicked => { root.on_button_pressed(")"); }
-                }
-                Button {
-                    text: "mod";
-                    clicked => { root.on_button_pressed("mod"); }
-                }
-                Button {
-                    text: "π";
-                    clicked => { root.on_button_pressed("π"); }
-                }
+                clear := Button { text: "C"; clicked => { root.button_clicked(self.text); } }
+                left_bracket := Button { text: "("; clicked => { root.button_clicked(self.text); } }
+                right_bracket := Button { text: ")"; clicked => { root.button_clicked(self.text); } }
+                mod := Button { text: "mod"; clicked => { root.button_clicked(self.text); } }
+                pi := Button { text: "π"; clicked => { root.button_clicked(self.text); } }
             }
             Row {
-                Button {
-                    text: "7";
-                    clicked => { root.on_button_pressed("7"); }
-                }
-                Button {
-                    text: "8";
-                    clicked => { root.on_button_pressed("8"); }
-                }
-                Button {
-                    text: "9";
-                    clicked => { root.on_button_pressed("9"); }
-                }
-                Button {
-                    text: "÷";
-                    clicked => { root.on_button_pressed("÷"); }
-                }
-                Button {
-                    text: "√";
-                    clicked => { root.on_button_pressed("√"); }
-                }
+                seven := Button { text: "7"; clicked => { root.button_clicked(self.text); } }
+                eight := Button { text: "8"; clicked => { root.button_clicked(self.text); } }
+                nine := Button { text: "9"; clicked => { root.button_clicked(self.text); } }
+                divide := Button { text: "÷"; clicked => { root.button_clicked(self.text); } }
+                sqrt := Button { text: "√"; clicked => { root.button_clicked(self.text); } }
             }
             Row {
-                Button {
-                    text: "4";
-                    clicked => { root.on_button_pressed("4"); }
-                }
-                Button {
-                    text: "5";
-                    clicked => { root.on_button_pressed("5"); }
-                }
-                Button {
-                    text: "6";
-                    clicked => { root.on_button_pressed("6"); }
-                }
-                Button {
-                    text: "×";
-                    clicked => { root.on_button_pressed("×"); }
-                }
-                Button {
-                    text: "x²";
-                    clicked => { root.on_button_pressed("x²"); }
-                }
+                four := Button { text: "4"; clicked => { root.button_clicked(self.text); } }
+                five := Button { text: "5"; clicked => { root.button_clicked(self.text); } }
+                six := Button { text: "6"; clicked => { root.button_clicked(self.text); } }
+                multiply := Button { text: "×"; clicked => { root.button_clicked(self.text); } }
+                square := Button { text: "x²"; clicked => { root.button_clicked(self.text); } }
             }
             Row {
-                Button {
-                    text: "1";
-                    clicked => { root.on_button_pressed("1"); }
-                }
-                Button {
-                    text: "2";
-                    clicked => { root.on_button_pressed("2"); }
-                }
-                Button {
-                    text: "3";
-                    clicked => { root.on_button_pressed("3"); }
-                }
-                Button {
-                    text: "-";
-                    clicked => { root.on_button_pressed("-"); }
-                }
-                Button {
-                    text: "x³";
-                    clicked => { root.on_button_pressed("x³"); }
-                }
+                one := Button { text: "1"; clicked => { root.button_clicked(self.text); } }
+                two := Button { text: "2"; clicked => { root.button_clicked(self.text); } }
+                three := Button { text: "3"; clicked => { root.button_clicked(self.text); } }
+                subtract := Button { text: "-"; clicked => { root.button_clicked(self.text); } }
+                cube := Button { text: "x³"; clicked => { root.button_clicked(self.text); } }
             }
             Row {
-                Button {
-                    text: "0";
-                    clicked => { root.on_button_pressed("0"); }
-                }
-                Button {
-                    text: ".";
-                    clicked => { root.on_button_pressed("."); }
-                }
-                Button {
-                    text: "%";
-                    clicked => { root.on_button_pressed("%"); }
-                }
-                Button {
-                    text: "+";
-                    clicked => { root.on_button_pressed("+"); }
-                }
-                Button {
-                    text: "=";
-                    clicked => { root.on_button_pressed("="); }
-                }
+                zero := Button { text: "0"; clicked => { root.button_clicked(self.text); } }
+                period := Button { text: "."; clicked => { root.button_clicked(self.text); } }
+                percent := Button { text: "%"; clicked => { root.button_clicked(self.text); } }
+                add := Button { text: "+"; clicked => { root.button_clicked(self.text); } }
+                equal := Button { text: "="; clicked => { root.button_clicked(self.text); } }
             }
         }
     }
