@@ -10,9 +10,8 @@ pub enum Token {
     Seven,
     Eight,
     Nine,
-    Clear,
-    LeftBracket,
-    RightBracket,
+    OpenBracket,
+    CloseBracket,
     Modulo,
     Pi,
     Divide,
@@ -22,74 +21,45 @@ pub enum Token {
     Subtract,
     Power,
     Period,
-    Percent,
     Add,
     Equal,
+    Unknown,
 }
 
-impl Token {
-    pub fn from_button(value: &str) -> Option<Self> {
+impl From<&str> for Token {
+    fn from(value: &str) -> Self {
         match value {
-            "0" => Some(Token::Zero),
-            "1" => Some(Token::One),
-            "2" => Some(Token::Two),
-            "3" => Some(Token::Three),
-            "4" => Some(Token::Four),
-            "5" => Some(Token::Five),
-            "6" => Some(Token::Six),
-            "7" => Some(Token::Seven),
-            "8" => Some(Token::Eight),
-            "9" => Some(Token::Nine),
-            "C" => Some(Token::Clear),
-            "(" => Some(Token::LeftBracket),
-            ")" => Some(Token::RightBracket),
-            "mod" => Some(Token::Modulo),
-            "π" => Some(Token::Pi),
-            "÷" => Some(Token::Divide),
-            "√" => Some(Token::SquareRoot),
-            "×" => Some(Token::Multiply),
-            "x²" => Some(Token::Square),
-            "-" => Some(Token::Subtract),
-            "xʸ" => Some(Token::Power),
-            "." => Some(Token::Period),
-            "%" => Some(Token::Percent),
-            "+" => Some(Token::Add),
-            "=" => Some(Token::Equal),
-            _ => None,
-        }
-    }
-
-    pub fn from_keypress(value: &str) -> Option<Self> {
-        match value {
-            "0" => Some(Token::Zero),
-            "1" => Some(Token::One),
-            "2" => Some(Token::Two),
-            "3" => Some(Token::Three),
-            "4" => Some(Token::Four),
-            "5" => Some(Token::Five),
-            "6" => Some(Token::Six),
-            "7" => Some(Token::Seven),
-            "8" => Some(Token::Eight),
-            "9" => Some(Token::Nine),
-            "\x7f" => Some(Token::Clear),
-            "(" => Some(Token::LeftBracket),
-            ")" => Some(Token::RightBracket),
-            "%" => Some(Token::Modulo),
-            "/" => Some(Token::Divide),
-            "*" => Some(Token::Multiply),
-            "-" => Some(Token::Subtract),
-            "^" => Some(Token::Power),
-            "." => Some(Token::Period),
-            "+" => Some(Token::Add),
-            "=" => Some(Token::Equal),
-            _ => None,
+            "0" => Token::Zero,
+            "1" => Token::One,
+            "2" => Token::Two,
+            "3" => Token::Three,
+            "4" => Token::Four,
+            "5" => Token::Five,
+            "6" => Token::Six,
+            "7" => Token::Seven,
+            "8" => Token::Eight,
+            "9" => Token::Nine,
+            "(" => Token::OpenBracket,
+            ")" => Token::CloseBracket,
+            " mod " => Token::Modulo,
+            "π" => Token::Pi,
+            "/" => Token::Divide,
+            "√" => Token::SquareRoot,
+            "*" => Token::Multiply,
+            "²" => Token::Square,
+            "-" => Token::Subtract,
+            " pow " => Token::Power,
+            "." => Token::Period,
+            "+" => Token::Add,
+            "=" => Token::Equal,
+            _ => Token::Unknown,
         }
     }
 }
 
-impl ToString for Token {
-    fn to_string(&self) -> String {
-        match self {
+impl From<Token> for String {
+    fn from(value: Token) -> String {
+        match value {
             Token::Zero => "0",
             Token::One => "1",
             Token::Two => "2",
@@ -100,21 +70,21 @@ impl ToString for Token {
             Token::Seven => "7",
             Token::Eight => "8",
             Token::Nine => "9",
-            Token::Clear => "C",
-            Token::LeftBracket => "(",
-            Token::RightBracket => ")",
-            Token::Modulo => "mod",
+            Token::OpenBracket => "(",
+            Token::CloseBracket => ")",
+            Token::Modulo => " mod ",
             Token::Pi => "π",
-            Token::Divide => "÷",
+            Token::Divide => "/",
             Token::SquareRoot => "√",
-            Token::Multiply => "×",
-            Token::Square => "x²",
+            Token::Multiply => "*",
+            Token::Square => "²",
             Token::Subtract => "-",
-            Token::Power => "xʸ",
+            Token::Power => " pow ",
             Token::Period => ".",
-            Token::Percent => "%",
             Token::Add => "+",
             Token::Equal => "=",
-        }.into()
+            Token::Unknown => "???",
+        }
+        .into()
     }
 }

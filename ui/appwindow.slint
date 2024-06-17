@@ -1,17 +1,18 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    in-out property<string> display_value: "0";
-    in-out property<string> current_operation: "";
-    in-out property<string> last_result: "0";
-    in-out property<string> last_operation: "";
+    in-out property<[string]> displayed_tokenstream: ["T", "E", "S"];
+    in-out property<[string]> previous_tokenstream: [];
 
     callback key_pressed(string);
     callback button_clicked(string);
+    pure callback flatten_tokenstream([string]) -> string;
 
     keyboard_handler := FocusScope { key-pressed(event) => { root.key_pressed(event.text); accept } }
     VerticalBox {
-        Text { text: "\{root.display_value}"; }
+        Text { 
+            text: root.flatten_tokenstream(root.displayed_tokenstream);
+        }
         GridLayout {
             Row {
                 clear := Button { text: "C"; clicked => { root.button_clicked(self.text); } }
@@ -42,9 +43,8 @@ export component AppWindow inherits Window {
                 power := Button { text: "xʸ"; clicked => { root.button_clicked(self.text); } }
             }
             Row {
-                zero := Button { text: "0"; clicked => { root.button_clicked(self.text); } }
-                period := Button { text: "."; clicked => { root.button_clicked(self.text); } }
-                percent := Button { text: "%"; clicked => { root.button_clicked(self.text); } }
+                zero := Button { colspan: 2; text: "0"; clicked => { root.button_clicked(self.text); } }
+                period := Button { col: 2; text: "."; clicked => { root.button_clicked(self.text); } }
                 add := Button { text: "+"; clicked => { root.button_clicked(self.text); } }
                 equal := Button { text: "="; clicked => { root.button_clicked(self.text); } }
             }
