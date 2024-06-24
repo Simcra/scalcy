@@ -1,91 +1,98 @@
-use std::sync::{Arc, Mutex};
-
-use button::Button;
-use key::Key;
-use operation::Operation;
-use token::Token;
-
-mod button;
-mod key;
-mod operation;
-mod token;
+use std::{
+    cell::{RefCell, RefMut},
+    rc::Rc,
+};
 
 slint::include_modules!();
 
 #[derive(Default)]
 struct CalculatorState {
-    prev_tokenstream: Vec<Token>,
-    curr_tokenstream: Vec<Token>,
+    current_tokenstream: slint::SharedString,
+    previous_tokenstream: slint::SharedString,
+    result: Option<f64>,
 }
 
-fn flatten_tokenstream(tokenstream: Vec<Token>) -> String {
-    let mut result = String::new();
-    for token in tokenstream {
-        result.push_str(String::from(token).as_str());
+fn update_display(app: CalculatorApp, state: &mut RefMut<CalculatorState>) {
+    app.set_result(match state.result {
+        Some(result) => result.to_string().into(),
+        None => "".into(),
+    });
+    app.set_tokenstream(state.current_tokenstream.clone());
+}
+
+fn do_backspace(app: CalculatorApp, state: &mut RefMut<CalculatorState>) {
+    if state.current_tokenstream.len() > 0 {
+        state.previous_tokenstream = state.current_tokenstream.clone();
+        let tokenstream = state.current_tokenstream.as_str();
+        state.current_tokenstream = tokenstream[..tokenstream.len() - 1].into();
     }
-    return result;
+    update_display(app, state);
 }
 
-fn perform_calculation(app: CalculatorApp, state_ref: Arc<Mutex<CalculatorState>>) {
+fn do_clear(app: CalculatorApp, state: &mut RefMut<CalculatorState>) {
+    state.previous_tokenstream = slint::SharedString::default();
+    state.current_tokenstream = slint::SharedString::default();
+    update_display(app, state);
 }
 
-fn add_to_tokenstream(app: CalculatorApp, state_ref: Arc<Mutex<CalculatorState>>, token: Token) {
-    let mut state = state_ref.lock().unwrap();
-    let mut tokenstream = state.curr_tokenstream.clone();
-
-    tokenstream.push(token);
-
-    state.prev_tokenstream = state.curr_tokenstream.clone();
-    state.curr_tokenstream = tokenstream.clone();
-    app.set_value(flatten_tokenstream(tokenstream).into());
+fn do_equals(app: CalculatorApp, state: &mut RefMut<CalculatorState>) {
+    state.previous_tokenstream = state.current_tokenstream.clone();
+    state.current_tokenstream = match state.result {
+        Some(result) => result.to_string().into(),
+        None => "Err".into(),
+    };
+    update_display(app, state);
 }
 
-fn handle_button_press(app: CalculatorApp, state_ref: Arc<Mutex<CalculatorState>>, button: Button) {
-    let token = Token::from(button);
-    println!("Button: {} - {}", String::from(button), String::from(token));
-
-    match token {
-        Token::Equal => perform_calculation(app, state_ref),
-        Token::Unknown => {}
-        _ => add_to_tokenstream(app, state_ref, token),
-    }
+fn do_add_token(app: CalculatorApp, state: &mut RefMut<CalculatorState>, value: &str) {
+    state.previous_tokenstream = state.current_tokenstream.clone();
+    state.current_tokenstream.push_str(value);
+    update_display(app, state);
 }
 
-fn handle_key_press(app: CalculatorApp, state_ref: Arc<Mutex<CalculatorState>>, key: Key) {
-    let token = Token::from(key);
-    println!("Key: {} - {}", String::from(key), String::from(token));
+fn handle_button_press(app: CalculatorApp, state: &mut RefMut<CalculatorState>, value: &str) {
+    match value {
+        "C" => do_clear(app, state),          // Do clear,
+        "=" => do_equals(app, state), // Store result into tokenstream if valid - otherwise error,
+        _ => do_add_token(app, state, value), // Add the token to the tokenstream
+    };
+}
 
-    match token {
-        Token::Equal => perform_calculation(app, state_ref),
-        Token::Unknown => {}
-        _ => add_to_tokenstream(app, state_ref, token),
-    }
+fn handle_key_press(app: CalculatorApp, state: &mut RefMut<CalculatorState>, value: &str) {
+    match value {
+        "\x08" => do_backspace(app, state), // Do backspace, BACKSPACE key
+        "\x7f" => do_clear(app, state),     // Do clear, DELETE key
+        "\n" => do_equals(app, state), // Store result in tokenstream if valid - otherwise error,
+        "\r" => do_equals(app, state), // Store result in tokenstream if valid - otherwise error,
+        "\r\n" => do_equals(app, state), // Store result in tokenstream if valid - otherwise error,
+        _ => do_add_token(app, state, value),
+    };
 }
 
 fn main() {
     let app = CalculatorApp::new().unwrap();
-    let state = Arc::new(Mutex::new(CalculatorState::default()));
+    let state = Rc::new(RefCell::new(CalculatorState::default()));
 
     app.global::<CalculatorLogic>().on_button_pressed({
         let app_weak = app.as_weak();
-        let state_weak = Arc::clone(&state);
+        let state_weak = state.clone();
         move |value| {
             handle_button_press(
                 app_weak.unwrap(),
-                Arc::clone(&state_weak),
-                Button::from(value.as_str()),
+                &mut state_weak.borrow_mut(),
+                value.as_str(),
             )
         }
     });
 
     app.global::<CalculatorLogic>().on_key_pressed({
         let app_weak = app.as_weak();
-        let state_weak = Arc::clone(&state);
-        move |value: slint::SharedString| {
+        let state_weak = state.clone();
+        move |value| {
             handle_key_press(
                 app_weak.unwrap(),
-                Arc::clone(&state_weak),
-                Key::from(value.as_str()),
+                &mut state_weak.borrow_mut(),
+                value.as_str(),
             )
         }
     });

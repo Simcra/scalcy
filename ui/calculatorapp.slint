@@ -25,13 +25,19 @@ component CalculatorButton {
 }
 
 export component CalculatorApp inherits Window {
-    in property <string> value: "0";
+    in property <string> result: "0";
+    in property <string> tokenstream: "0";
 
     FocusScope { key-pressed(event) => { CalculatorLogic.key-pressed(event.text); accept } }
     GridLayout {
         padding: 10px;
         spacing: 5px;
-        Text { text: value; colspan: 5; }
+        Row {
+            Text { text: result; colspan: 5; }
+        }
+        Row {
+            Text { text: tokenstream; colspan: 5; }
+        }
         Row {
             CalculatorButton { text: "C"; }
             CalculatorButton { text: "("; }
