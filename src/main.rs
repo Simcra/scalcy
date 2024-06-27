@@ -1,3 +1,6 @@
+mod parsing;
+use parsing::*;
+
 use std::{
     cell::{RefCell, RefMut},
     rc::Rc,
@@ -45,6 +48,13 @@ fn do_equals(app: CalculatorApp, state: &mut RefMut<CalculatorState>) {
 }
 
 fn do_add_token(app: CalculatorApp, state: &mut RefMut<CalculatorState>, value: &str) {
+    if value
+        .chars()
+        .any(|c| (c.is_control() && c != '\n' && c != '\r') || c >= '\u{f700}')
+    {
+        return;
+    }
+
     state.previous_tokenstream = state.current_tokenstream.clone();
     state.current_tokenstream.push_str(value);
     update_display(app, state);
