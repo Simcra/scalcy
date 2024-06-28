@@ -1,12 +1,12 @@
 import { VerticalBox } from "std-widgets.slint";
 
 export global CalculatorLogic {
-    callback button-pressed(string);
     callback key-pressed(string);
 }
 
 component CalculatorButton {
     in property <string> text;
+    in property <string> key: text;
     min-height: 30px;
     max-height: 30px;
     min-width: 30px;
@@ -18,15 +18,15 @@ component CalculatorButton {
         border-width: 2px;
         border-color: self.background.darker(20%);
         ta := TouchArea {
-            clicked => { CalculatorLogic.button-pressed(root.text); }
+            clicked => { CalculatorLogic.key-pressed(root.key == "" ? root.key : root.text); }
         }
     }
     Text { text: root.text; }
 }
 
 export component CalculatorApp inherits Window {
+    in property <string> input: "0";
     in property <string> result: "0";
-    in property <string> tokenstream: "0";
 
     FocusScope { key-pressed(event) => { CalculatorLogic.key-pressed(event.text); accept } }
     GridLayout {
@@ -36,41 +36,41 @@ export component CalculatorApp inherits Window {
             Text { text: result; colspan: 5; }
         }
         Row {
-            Text { text: tokenstream; colspan: 5; }
+            Text { text: input; colspan: 5; }
         }
         Row {
-            CalculatorButton { text: "C"; }
+            CalculatorButton { text: "C"; key: "\u{7f}"; }
             CalculatorButton { text: "("; }
             CalculatorButton { text: ")"; }
-            CalculatorButton { text: "mod";}
+            CalculatorButton { text: "mod"; key: "%"; }
             CalculatorButton { text: "π"; }
         }
         Row {
             CalculatorButton { text: "7"; }
             CalculatorButton { text: "8"; }
             CalculatorButton { text: "9"; }
-            CalculatorButton { text: "÷"; }
+            CalculatorButton { text: "÷"; key: "/"; }
             CalculatorButton { text: "√"; }
         }
         Row {
             CalculatorButton { text: "4"; }
             CalculatorButton { text: "5"; }
             CalculatorButton { text: "6"; }
-            CalculatorButton { text: "×"; }
-            CalculatorButton { text: "x²"; }
+            CalculatorButton { text: "×"; key: "*"; }
+            CalculatorButton { text: "x²"; key: "^2"; }
         }
         Row {
             CalculatorButton { text: "1"; }
             CalculatorButton { text: "2"; }
             CalculatorButton { text: "3"; }
             CalculatorButton { text: "-"; }
-            CalculatorButton { text: "xʸ"; }
+            CalculatorButton { text: "xʸ"; key: "^"; }
         }
         Row {
             CalculatorButton { colspan: 2; text: "0"; }
             CalculatorButton { col: 2; text: "."; }
             CalculatorButton { text: "+"; }
-            CalculatorButton { text: "="; }
+            CalculatorButton { text: "="; key: "\n"; }
         }
     }
 }
