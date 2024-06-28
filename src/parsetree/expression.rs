@@ -8,6 +8,12 @@ pub enum Expression {
     BinaryExpression(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
+impl Default for Expression {
+    fn default() -> Self {
+        Expression::Number(0.0)
+    }
+}
+
 impl ToString for Expression {
     fn to_string(&self) -> String {
         match self {
