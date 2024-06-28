@@ -17,20 +17,17 @@ impl<'a> Lexer<'a> {
         let mut result = Vec::new();
 
         while let Some(&ch) = self.peek_char() {
+            if ch.is_whitespace() {
+                self.next_char();
+                continue;
+            }
+
             match ch {
                 '0'..='9' => {
                     let number = self.lex_number()?;
                     result.push(Token::Number(number));
                 }
                 _ => {
-                    while let Some(&ch) = self.peek_char() {
-                        if ch.is_whitespace() {
-                            self.next_char();
-                        } else {
-                            break;
-                        }
-                    }
-
                     let token = self.lex_token()?;
                     result.push(token);
                 }

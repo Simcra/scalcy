@@ -1,6 +1,7 @@
 import { VerticalBox } from "std-widgets.slint";
 
 export global CalculatorLogic {
+    callback is-empty(string) -> bool;
     callback key-pressed(string);
 }
 
@@ -18,7 +19,7 @@ component CalculatorButton {
         border-width: 2px;
         border-color: self.background.darker(20%);
         ta := TouchArea {
-            clicked => { CalculatorLogic.key-pressed(root.key == "" ? root.key : root.text); }
+            clicked => { CalculatorLogic.key-pressed(CalculatorLogic.is-empty(root.key) ? root.text : root.key); }
         }
     }
     Text { text: root.text; }

@@ -41,6 +41,9 @@ fn main() {
     let app = CalculatorApp::new().unwrap();
     let calculator = Rc::new(RefCell::new(Calculator::default()));
 
+    app.global::<CalculatorLogic>()
+        .on_is_empty(|value| value.is_empty());
+
     app.global::<CalculatorLogic>().on_key_pressed({
         let app_weak = app.as_weak();
         let calculator_weak = calculator.clone();
