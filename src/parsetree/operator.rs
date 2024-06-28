@@ -1,35 +1,40 @@
-use crate::{FromToken, Token};
+use crate::{FromToken, Precedence, Token};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UnaryOperator {
-    Square,
+pub enum UnaryPreOperator {
     SquareRoot,
 }
 
-impl ToString for UnaryOperator {
+impl ToString for UnaryPreOperator {
     fn to_string(&self) -> String {
         match self {
-            UnaryOperator::Square => Token::Square.to_string(),
-            UnaryOperator::SquareRoot => Token::SquareRoot.to_string(),
+            UnaryPreOperator::SquareRoot => Token::SquareRoot.to_string(),
         }
     }
 }
 
-impl From<UnaryOperator> for String {
-    fn from(value: UnaryOperator) -> Self {
+impl Precedence for UnaryPreOperator {
+    fn precedence(&self) -> u8 {
+        match self {
+            UnaryPreOperator::SquareRoot => Token::SquareRoot.precedence(),
+        }
+    }
+}
+
+impl From<UnaryPreOperator> for String {
+    fn from(value: UnaryPreOperator) -> Self {
         value.to_string()
     }
 }
 
-impl FromToken for UnaryOperator {
+impl FromToken for UnaryPreOperator {
     type Err = String;
     fn from_token(token: &Token) -> Result<Self, Self::Err> {
         match token {
-            Token::Square => Ok(UnaryOperator::Square),
-            Token::SquareRoot => Ok(UnaryOperator::SquareRoot),
+            Token::SquareRoot => Ok(UnaryPreOperator::SquareRoot),
             _ => {
                 let token_str = token.to_string();
-                Err(format!("Token \'{token_str}\' is not a unary operator"))
+                Err(format!("Token \'{token_str}\' is not a unary pre-operator"))
             }
         }
     }
@@ -54,6 +59,19 @@ impl ToString for BinaryOperator {
             BinaryOperator::Divide => Token::Divide.to_string(),
             BinaryOperator::Power => Token::Power.to_string(),
             BinaryOperator::Modulo => Token::Modulo.to_string(),
+        }
+    }
+}
+
+impl Precedence for BinaryOperator {
+    fn precedence(&self) -> u8 {
+        match self {
+            BinaryOperator::Add => Token::Add.precedence(),
+            BinaryOperator::Subtract => Token::Subtract.precedence(),
+            BinaryOperator::Multiply => Token::Multiply.precedence(),
+            BinaryOperator::Divide => Token::Divide.precedence(),
+            BinaryOperator::Power => Token::Power.precedence(),
+            BinaryOperator::Modulo => Token::Modulo.precedence(),
         }
     }
 }

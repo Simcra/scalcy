@@ -19,9 +19,9 @@ impl From<Constant> for String {
     }
 }
 
-impl Into<f64> for Constant {
-    fn into(self) -> f64 {
-        match self {
+impl From<Constant> for f64 {
+    fn from(value: Constant) -> Self {
+        match value {
             Constant::Pi => std::f64::consts::PI,
         }
     }
