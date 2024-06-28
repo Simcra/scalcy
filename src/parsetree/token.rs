@@ -52,16 +52,16 @@ impl From<Token> for String {
 impl Precedence for Token {
     fn precedence(&self) -> u8 {
         match self {
-            Token::LeftParen => 0,
-            Token::RightParen => 0,
-            Token::Modulo => 1,
-            Token::Divide => 2,
-            Token::SquareRoot => 1,
+            Token::LeftParen => 6,
+            Token::RightParen => 6,
+            Token::Modulo => 5,
+            Token::Divide => 4,
+            Token::SquareRoot => 5,
             Token::Multiply => 3,
-            Token::Subtract => 5,
-            Token::Power => 1,
-            Token::Add => 4,
-            _ => 6,
+            Token::Subtract => 1,
+            Token::Power => 5,
+            Token::Add => 2,
+            _ => 0,
         }
     }
 }
