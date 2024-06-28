@@ -1,4 +1,4 @@
-use crate::Token;
+use crate::{FromToken, Token};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
@@ -18,6 +18,20 @@ impl ToString for UnaryOperator {
 impl From<UnaryOperator> for String {
     fn from(value: UnaryOperator) -> Self {
         value.to_string()
+    }
+}
+
+impl FromToken for UnaryOperator {
+    type Err = String;
+    fn from_token(token: &Token) -> Result<Self, Self::Err> {
+        match token {
+            Token::Square => Ok(UnaryOperator::Square),
+            Token::SquareRoot => Ok(UnaryOperator::SquareRoot),
+            _ => {
+                let token_str = token.to_string();
+                Err(format!("Token \'{token_str}\' is not a unary operator"))
+            }
+        }
     }
 }
 
@@ -47,5 +61,23 @@ impl ToString for BinaryOperator {
 impl From<BinaryOperator> for String {
     fn from(value: BinaryOperator) -> Self {
         value.to_string()
+    }
+}
+
+impl FromToken for BinaryOperator {
+    type Err = String;
+    fn from_token(token: &Token) -> Result<Self, Self::Err> {
+        match token {
+            Token::Add => Ok(BinaryOperator::Add),
+            Token::Subtract => Ok(BinaryOperator::Subtract),
+            Token::Multiply => Ok(BinaryOperator::Multiply),
+            Token::Divide => Ok(BinaryOperator::Divide),
+            Token::Power => Ok(BinaryOperator::Power),
+            Token::Modulo => Ok(BinaryOperator::Modulo),
+            _ => {
+                let token_str = token.to_string();
+                Err(format!("Token \'{token_str}\' is not a binary operator"))
+            }
+        }
     }
 }

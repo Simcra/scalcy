@@ -1,4 +1,7 @@
-use std::str::FromStr;
+pub trait FromToken: Sized {
+    type Err;
+    fn from_token(token: &Token) -> Result<Self, Self::Err>;
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Token {
@@ -14,7 +17,6 @@ pub enum Token {
     Subtract,
     Power,
     Add,
-    Equal,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,7 +37,6 @@ impl ToString for Token {
             Token::Subtract => "-".to_string(),
             Token::Power => "^".to_string(),
             Token::Add => "+".to_string(),
-            Token::Equal => "=".to_string(),
         }
     }
 }
@@ -46,23 +47,20 @@ impl From<Token> for String {
     }
 }
 
-impl FromStr for Token {
-    type Err = ParseTokenError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "(" => Ok(Token::LeftParen),
-            ")" => Ok(Token::RightParen),
-            "%" => Ok(Token::Modulo),
-            "π" => Ok(Token::Pi),
-            "/" => Ok(Token::Divide),
-            "√" => Ok(Token::SquareRoot),
-            "*" => Ok(Token::Multiply),
-            "²" => Ok(Token::Square),
-            "-" => Ok(Token::Subtract),
-            "^" => Ok(Token::Power),
-            "+" => Ok(Token::Add),
-            "=" => Ok(Token::Equal),
-            _ => Err(ParseTokenError),
+impl Token {
+    pub fn precedence(&self) -> u8 {
+        match self {
+            Token::LeftParen => 0,
+            Token::RightParen => 0,
+            Token::Modulo => 1,
+            Token::Divide => 2,
+            Token::SquareRoot => 1,
+            Token::Multiply => 3,
+            Token::Square => 1,
+            Token::Subtract => 5,
+            Token::Power => 1,
+            Token::Add => 4,
+            _ => 6,
         }
     }
 }
