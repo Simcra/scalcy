@@ -72,7 +72,6 @@ impl<'a> Lexer<'a> {
                 '/' => Ok(Token::Divide),
                 '√' => Ok(Token::SquareRoot),
                 '*' => Ok(Token::Multiply),
-                '²' => Ok(Token::Square),
                 '-' => Ok(Token::Subtract),
                 '^' => Ok(Token::Power),
                 '+' => Ok(Token::Add),
@@ -81,5 +80,126 @@ impl<'a> Lexer<'a> {
         } else {
             Err("Unexpected end of input".to_string())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Token;
+
+    #[test]
+    fn test_lex_numbers() {
+        let mut lexer = Lexer::new("123");
+        assert_eq!(lexer.lex_number().unwrap(), 123.0);
+        lexer = Lexer::new("456.789");
+        assert_eq!(lexer.lex_number().unwrap(), 456.789);
+    }
+
+    #[test]
+    fn test_lex_tokens() {
+        let mut lexer = Lexer::new("(");
+        assert_eq!(lexer.lex_token().unwrap(), Token::LeftParen);
+        lexer = Lexer::new(")");
+        assert_eq!(lexer.lex_token().unwrap(), Token::RightParen);
+        lexer = Lexer::new("%");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Modulo);
+        lexer = Lexer::new("π");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Pi);
+        lexer = Lexer::new("/");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Divide);
+        lexer = Lexer::new("√");
+        assert_eq!(lexer.lex_token().unwrap(), Token::SquareRoot);
+        lexer = Lexer::new("*");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Multiply);
+        lexer = Lexer::new("-");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Subtract);
+        lexer = Lexer::new("^");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Power);
+        lexer = Lexer::new("+");
+        assert_eq!(lexer.lex_token().unwrap(), Token::Add);
+    }
+
+    #[test]
+    fn test_lex_complex_expression() {
+        let mut lexer = Lexer::new("123 + 456 * (789 - π)");
+
+        let tokens = lexer.lex().unwrap();
+        let expected_tokens = vec![
+            Token::Number(123.0),
+            Token::Add,
+            Token::Number(456.0),
+            Token::Multiply,
+            Token::LeftParen,
+            Token::Number(789.0),
+            Token::Subtract,
+            Token::Pi,
+            Token::RightParen,
+        ];
+
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_lex_more_complex_expression() {
+        let mut lexer = Lexer::new("1 + 1.236 + (3 - (1 - 2)) * 47 / π + √42 - 3^3");
+
+        let tokens = lexer.lex().unwrap();
+        let expected_tokens = vec![
+            Token::Number(1.0),
+            Token::Add,
+            Token::Number(1.236),
+            Token::Add,
+            Token::LeftParen,
+            Token::Number(3.0),
+            Token::Subtract,
+            Token::LeftParen,
+            Token::Number(1.0),
+            Token::Subtract,
+            Token::Number(2.0),
+            Token::RightParen,
+            Token::RightParen,
+            Token::Multiply,
+            Token::Number(47.0),
+            Token::Divide,
+            Token::Pi,
+            Token::Add,
+            Token::SquareRoot,
+            Token::Number(42.0),
+            Token::Subtract,
+            Token::Number(3.0),
+            Token::Power,
+            Token::Number(3.0),
+        ];
+
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_lex_whitespace() {
+        let mut lexer = Lexer::new("   123   +   456   ");
+
+        let tokens = lexer.lex().unwrap();
+        let expected_tokens = vec![Token::Number(123.0), Token::Add, Token::Number(456.0)];
+
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_lex_invalid_input() {
+        let mut lexer = Lexer::new("123 $ 456");
+
+        let result = lexer.lex();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_lex_empty_input() {
+        let mut lexer = Lexer::new("");
+
+        let tokens = lexer.lex().unwrap();
+        let expected_tokens: Vec<Token> = vec![];
+
+        assert_eq!(tokens, expected_tokens);
     }
 }
