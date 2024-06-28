@@ -3,6 +3,10 @@ pub trait FromToken: Sized {
     fn from_token(token: &Token) -> Result<Self, Self::Err>;
 }
 
+pub trait Precedence {
+    fn precedence(&self) -> u8;
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Token {
     Number(f64),
@@ -47,8 +51,8 @@ impl From<Token> for String {
     }
 }
 
-impl Token {
-    pub fn precedence(&self) -> u8 {
+impl Precedence for Token {
+    fn precedence(&self) -> u8 {
         match self {
             Token::LeftParen => 0,
             Token::RightParen => 0,
