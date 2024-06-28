@@ -1,11 +1,11 @@
-use crate::{BinaryOperator, Constant, UnaryOperator};
+use crate::{BinaryOperator, Constant, UnaryPreOperator};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Number(f64),
     Constant(Constant),
-    UnaryPreExpression(UnaryOperator, Box<Expression>),
-    UnaryPostExpression(UnaryOperator, Box<Expression>),
+    UnaryPreExpression(UnaryPreOperator, Box<Expression>),
+    // UnaryPostExpression(UnaryPostOperator, Box<Expression>),
     BinaryExpression(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
@@ -25,9 +25,9 @@ impl ToString for Expression {
             Expression::UnaryPreExpression(op, a) => {
                 "( ".to_string() + op.to_string().as_str() + a.as_ref().to_string().as_str() + " )"
             }
-            Expression::UnaryPostExpression(op, a) => {
-                "( ".to_string() + a.as_ref().to_string().as_str() + op.to_string().as_str() + " )"
-            }
+            // Expression::UnaryPostExpression(op, a) => {
+            //     "( ".to_string() + a.as_ref().to_string().as_str() + op.to_string().as_str() + " )"
+            // }
             Expression::BinaryExpression(op, a, b) => {
                 "( ".to_string()
                     + a.as_ref().to_string().as_str()

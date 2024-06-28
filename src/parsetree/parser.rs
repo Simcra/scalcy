@@ -1,6 +1,6 @@
 use std::{iter::Peekable, vec::IntoIter};
 
-use crate::{BinaryOperator, Constant, Expression, FromToken, Token, UnaryOperator};
+use crate::{BinaryOperator, Constant, Expression, FromToken, Precedence, Token, UnaryPreOperator};
 
 pub struct Parser {
     tokens: Peekable<IntoIter<Token>>,
@@ -14,7 +14,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<Expression, String> {
-        self.parse_expression()
+        self.parse_expression(0)
     }
 
     fn next_token(&mut self) -> Option<Token> {
@@ -25,110 +25,149 @@ impl Parser {
         self.tokens.peek()
     }
 
+    fn expect(&mut self, expected: Token) -> Result<(), String> {
+        match self.next_token() {
+            Some(token) if token == expected => Ok(()),
+            Some(token) => Err(format!("Expected {:?} but found {:?}", expected, token)),
+            None => Err(format!("Expected {:?} but reached end of input", expected)),
+        }
+    }
+
     fn parse_primary(&mut self) -> Result<Expression, String> {
-        if let Some(token) = self.peek_token().cloned() {
-            match token {
-                Token::Number(value) => {
-                    self.next_token();
-                    Ok(Expression::Number(value))
-                }
-                Token::Pi => {
-                    self.next_token();
-                    Ok(Expression::Constant(Constant::Pi))
-                }
-                Token::LeftParen => {
-                    self.next_token();
-                    let expr = self.parse_expression()?;
-                    if let Some(Token::RightParen) = self.next_token() {
-                        Ok(expr)
-                    } else {
-                        let expr_str = expr.to_string();
-                        Err(format!(
-                            "Expected closing parenthesis for expression \'{expr_str}\'"
-                        ))
-                    }
-                }
-                _ => Err(format!("Unexpected token \'{}\'", token.to_string())),
+        match self.next_token() {
+            Some(Token::Number(value)) => Ok(Expression::Number(value)),
+            Some(Token::Pi) => Ok(Expression::Constant(Constant::Pi)),
+            Some(Token::LeftParen) => {
+                let expr = self.parse_expression(0)?;
+                self.expect(Token::RightParen)?;
+                Ok(expr)
             }
-        } else {
-            Err("Unexpected end of input".to_string())
+            Some(token) => {
+                if let Ok(op) = UnaryPreOperator::from_token(&token) {
+                    let rhs = self.parse_primary()?;
+                    Ok(Expression::UnaryPreExpression(op, Box::new(rhs)))
+                } else {
+                    Err(format!("Unexpected token: {:?}", token))
+                }
+            }
+            None => Err("Unexpected end of input".to_string()),
         }
     }
 
-    fn parse_unary(&mut self) -> Result<Expression, String> {
-        if let Some(op) = self.peek_token().cloned() {
-            match op {
-                Token::SquareRoot => {
-                    self.next_token();
-                    Ok(Expression::UnaryExpression(
-                        UnaryOperator::SquareRoot,
-                        Box::new(self.parse_unary()?),
-                    ))
-                }
-                _ => {
-                    let expr = self.parse_primary()?;
-                    self.parse_unary_postfix(expr)
-                }
-            }
-        } else {
-            Err("Unexpected end of input".to_string())
-        }
-    }
-
-    fn parse_unary_postfix(&mut self, expr: Expression) -> Result<Expression, String> {
-        if let Some(op) = self.peek_token() {
-            match op {
-                Token::Square => {
-                    self.next_token();
-                    self.parse_unary_postfix(Expression::UnaryExpression(
-                        UnaryOperator::Square,
-                        Box::new(expr),
-                    ))
-                }
-                _ => Ok(expr),
-            }
-        } else {
-            Ok(expr)
-        }
-    }
-
-    fn parse_binary(&mut self, precedence: u8) -> Result<Expression, String> {
-        let mut expr_lhs = self.parse_unary()?;
+    fn parse_expression(&mut self, min_precedence: u8) -> Result<Expression, String> {
+        let mut lhs = self.parse_primary()?;
 
         while let Some(token) = self.peek_token().cloned() {
-            let precendence_curr = token.precedence();
-            if precendence_curr < precedence {
+            if let Ok(op) = UnaryPreOperator::from_token(&token) {
+                if op.precedence() < min_precedence {
+                    break; // Unary operators have higher precedence
+                }
+                self.next_token();
+                let rhs = self.parse_expression(op.precedence())?;
+                lhs = Expression::UnaryPreExpression(op, Box::new(rhs));
+            } else if let Ok(op) = BinaryOperator::from_token(&token) {
+                if op.precedence() < min_precedence {
+                    break; // Binary operators have higher precedence
+                }
+                self.next_token();
+                let rhs = self.parse_expression(op.precedence() + 1)?;
+                lhs = Expression::BinaryExpression(op, Box::new(lhs), Box::new(rhs));
+            } else {
                 break;
             }
-
-            self.next_token();
-            let mut expr_rhs = self.parse_unary()?;
-
-            while let Some(op_next) = self.peek_token() {
-                let precendence_next = op_next.precedence();
-                if precendence_next > precendence_curr {
-                    expr_rhs = self.parse_binary(precendence_next)?;
-                } else {
-                    break;
-                }
-            }
-
-            let operator = BinaryOperator::from_token(&token);
-            if operator.is_err() {
-                return Err(operator.unwrap_err());
-            }
-
-            expr_lhs = Expression::BinaryExpression(
-                operator.unwrap(),
-                Box::new(expr_lhs),
-                Box::new(expr_rhs),
-            );
         }
 
-        Ok(expr_lhs)
+        Ok(lhs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Lexer;
+
+    fn parse_and_assert(input: &str, expected_expr: Expression) {
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_expr = parser.parse().unwrap();
+        assert_eq!(parsed_expr, expected_expr);
     }
 
-    fn parse_expression(&mut self) -> Result<Expression, String> {
-        self.parse_binary(0)
+    #[test]
+    fn test_simple_addition() {
+        parse_and_assert(
+            "2 + 3",
+            Expression::BinaryExpression(
+                BinaryOperator::Add,
+                Box::new(Expression::Number(2.0)),
+                Box::new(Expression::Number(3.0)),
+            ),
+        );
+    }
+
+    #[test]
+    fn test_complex_expression() {
+        parse_and_assert(
+            "2 + 3 * 4 - √9",
+            Expression::BinaryExpression(
+                BinaryOperator::Subtract,
+                Box::new(Expression::BinaryExpression(
+                    BinaryOperator::Add,
+                    Box::new(Expression::Number(2.0)),
+                    Box::new(Expression::BinaryExpression(
+                        BinaryOperator::Multiply,
+                        Box::new(Expression::Number(3.0)),
+                        Box::new(Expression::Number(4.0)),
+                    )),
+                )),
+                Box::new(Expression::UnaryPreExpression(
+                    UnaryPreOperator::SquareRoot,
+                    Box::new(Expression::Number(9.0)),
+                )),
+            ),
+        );
+    }
+
+    #[test]
+    fn test_parentheses() {
+        parse_and_assert(
+            "2 * (3 + 4)",
+            Expression::BinaryExpression(
+                BinaryOperator::Multiply,
+                Box::new(Expression::Number(2.0)),
+                Box::new(Expression::BinaryExpression(
+                    BinaryOperator::Add,
+                    Box::new(Expression::Number(3.0)),
+                    Box::new(Expression::Number(4.0)),
+                )),
+            ),
+        );
+    }
+
+    #[test]
+    fn test_operator_precedence() {
+        parse_and_assert(
+            "2 ^ 3 * 4 + 5 / √9",
+            Expression::BinaryExpression(
+                BinaryOperator::Add,
+                Box::new(Expression::BinaryExpression(
+                    BinaryOperator::Multiply,
+                    Box::new(Expression::BinaryExpression(
+                        BinaryOperator::Power,
+                        Box::new(Expression::Number(2.0)),
+                        Box::new(Expression::Number(3.0)),
+                    )),
+                    Box::new(Expression::Number(4.0)),
+                )),
+                Box::new(Expression::BinaryExpression(
+                    BinaryOperator::Divide,
+                    Box::new(Expression::Number(5.0)),
+                    Box::new(Expression::UnaryPreExpression(
+                        UnaryPreOperator::SquareRoot,
+                        Box::new(Expression::Number(9.0)),
+                    )),
+                )),
+            ),
+        );
     }
 }
