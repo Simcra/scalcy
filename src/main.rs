@@ -12,7 +12,7 @@ use slint::SharedString;
 
 slint::include_modules!();
 
-fn handle_key_press(app: CalculatorApp, calculator: &mut RefMut<Calculator>, value: &str) {
+fn handle_key_press(app: SCalcyApp, calculator: &mut RefMut<Calculator>, value: &str) {
     match value {
         "\x08" => {
             // BACKSPACE key
@@ -38,13 +38,13 @@ fn handle_key_press(app: CalculatorApp, calculator: &mut RefMut<Calculator>, val
 }
 
 fn main() {
-    let app = CalculatorApp::new().unwrap();
+    let app = SCalcyApp::new().unwrap();
     let calculator = Rc::new(RefCell::new(Calculator::default()));
 
-    app.global::<CalculatorLogic>()
+    app.global::<SCalcyLogic>()
         .on_is_empty(|value| value.is_empty());
 
-    app.global::<CalculatorLogic>().on_key_pressed({
+    app.global::<SCalcyLogic>().on_key_pressed({
         let app_weak = app.as_weak();
         let calculator_weak = calculator.clone();
         move |value| {

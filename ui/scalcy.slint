@@ -1,0 +1,77 @@
+import { VerticalBox } from "std-widgets.slint";
+
+export global SCalcyLogic {
+    callback is-empty(string) -> bool;
+    callback key-pressed(string);
+}
+
+component SCalcyButton {
+    in property <string> text;
+    in property <string> key: text;
+    min-height: 30px;
+    max-height: 30px;
+    min-width: 30px;
+    in property <brush> background: #a3b4cf;
+    Rectangle {
+        background: ta.pressed ? blue : ta.has-hover ? background.darker(10%) : background;
+        animate background { duration: 100ms; }
+        border-radius: 4px;
+        border-width: 2px;
+        border-color: self.background.darker(20%);
+        ta := TouchArea {
+            clicked => { SCalcyLogic.key-pressed(SCalcyLogic.is-empty(root.key) ? root.text : root.key); }
+        }
+    }
+    Text { text: root.text; }
+}
+
+export component SCalcyApp inherits Window {
+    in property <string> input: "0";
+    in property <string> result: "0";
+
+    FocusScope { key-pressed(event) => { SCalcyLogic.key-pressed(event.text); accept } }
+    GridLayout {
+        padding: 10px;
+        spacing: 5px;
+        Row {
+            Text { text: result; colspan: 5; }
+        }
+        Row {
+            Text { text: input; colspan: 5; }
+        }
+        Row {
+            SCalcyButton { text: "C"; key: "\u{7f}"; }
+            SCalcyButton { text: "("; }
+            SCalcyButton { text: ")"; }
+            SCalcyButton { text: "mod"; key: "%"; }
+            SCalcyButton { text: "π"; }
+        }
+        Row {
+            SCalcyButton { text: "7"; }
+            SCalcyButton { text: "8"; }
+            SCalcyButton { text: "9"; }
+            SCalcyButton { text: "÷"; key: "/"; }
+            SCalcyButton { text: "√"; }
+        }
+        Row {
+            SCalcyButton { text: "4"; }
+            SCalcyButton { text: "5"; }
+            SCalcyButton { text: "6"; }
+            SCalcyButton { text: "×"; key: "*"; }
+            SCalcyButton { text: "x²"; key: "^2"; }
+        }
+        Row {
+            SCalcyButton { text: "1"; }
+            SCalcyButton { text: "2"; }
+            SCalcyButton { text: "3"; }
+            SCalcyButton { text: "-"; }
+            SCalcyButton { text: "xʸ"; key: "^"; }
+        }
+        Row {
+            SCalcyButton { colspan: 2; text: "0"; }
+            SCalcyButton { col: 2; text: "."; }
+            SCalcyButton { text: "+"; }
+            SCalcyButton { text: "="; key: "\n"; }
+        }
+    }
+}

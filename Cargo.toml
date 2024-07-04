@@ -1,5 +1,5 @@
 [package]
-name = "slint-rust-calculator"
+name = "scalcy"
 version = "0.1.0"
 authors = ["Simcra"]
 edition = "2021"
