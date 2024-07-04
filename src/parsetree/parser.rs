@@ -2,6 +2,7 @@ use std::{iter::Peekable, vec::IntoIter};
 
 use crate::{BinaryOperator, Constant, Expression, FromToken, Precedence, Token, UnaryPreOperator};
 
+#[derive(Debug)]
 pub struct Parser {
     tokens: Peekable<IntoIter<Token>>,
 }

@@ -1,6 +1,6 @@
 use crate::{Lexer, Parser};
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Calculator {
     input: String,
     result: String,
@@ -53,6 +53,8 @@ impl Calculator {
             return;
         }
 
-        self.result = "Result".to_string();
+        // Do the calculation and update the GUI
+        let expr = parser_result.unwrap();
+        self.result = expr.solve().to_string();
     }
 }

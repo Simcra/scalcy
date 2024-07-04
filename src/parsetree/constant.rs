@@ -8,7 +8,7 @@ pub enum Constant {
 impl ToString for Constant {
     fn to_string(&self) -> String {
         match self {
-            Constant::Pi => Token::Pi.to_string(),
+            Self::Pi => Token::Pi.to_string(),
         }
     }
 }

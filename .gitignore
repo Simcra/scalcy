@@ -11,3 +11,6 @@ target/
 
 # Direnv files
 .direnv/
+
+# VSCode files
+.vscode/launch.json
