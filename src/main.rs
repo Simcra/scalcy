@@ -12,7 +12,7 @@ use slint::SharedString;
 
 slint::include_modules!();
 
-fn handle_key_press(app: SCalcyApp, calculator: &mut RefMut<Calculator>, value: &str) {
+fn handle_key_press(ui: AppWindow, calculator: &mut RefMut<Calculator>, value: &str) {
     match value {
         "\x08" => {
             // BACKSPACE key
@@ -33,28 +33,28 @@ fn handle_key_press(app: SCalcyApp, calculator: &mut RefMut<Calculator>, value: 
         }
     };
 
-    app.set_input(SharedString::from(calculator.input()));
-    app.set_result(SharedString::from(calculator.result()));
+    ui.set_input(SharedString::from(calculator.input()));
+    ui.set_result(SharedString::from(calculator.result()));
 }
 
-fn main() {
-    let app = SCalcyApp::new().unwrap();
+fn main() -> Result<(), slint::PlatformError> {
+    let ui = AppWindow::new()?;
     let calculator = Rc::new(RefCell::new(Calculator::default()));
 
-    app.global::<SCalcyLogic>()
+    ui.global::<AppLogic>()
         .on_is_empty(|value| value.is_empty());
 
-    app.global::<SCalcyLogic>().on_key_pressed({
-        let app_weak = app.as_weak();
+    ui.global::<AppLogic>().on_key_pressed({
+        let ui_weak = ui.as_weak();
         let calculator_weak = calculator.clone();
         move |value| {
             handle_key_press(
-                app_weak.unwrap(),
+                ui_weak.unwrap(),
                 &mut calculator_weak.borrow_mut(),
                 value.as_str(),
             )
         }
     });
 
-    app.run().unwrap();
+    ui.run()
 }
