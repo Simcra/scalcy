@@ -20,6 +20,7 @@
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        pname = "scalcy";
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
@@ -44,27 +45,26 @@
             (craneLib.filterCargoSources path type);
         };
 
+        libPath = with pkgs; lib.makeLibraryPath [
+          wayland
+          libxkbcommon
+          fontconfig
+          xorg.libX11
+          xorg.libXcursor
+          xorg.libXrandr
+          xorg.libXi
+        ];
+
+
+
         commonArgs = {
-          inherit src;
+          inherit src pname;
           strictDeps = true;
 
           nativeBuildInputs = with pkgs; [
             pkg-config
             openssl
-          ];
-
-          buildInputs = with pkgs; [
-            libxkbcommon
-            fontconfig
-
-            # Wayland
-            wayland
-
-            # Xorg/X11
-            xorg.libX11
-            xorg.libXcursor
-            xorg.libXrandr
-            xorg.libXi
+            makeWrapper
           ];
         };
 
@@ -89,6 +89,10 @@
               "${rustToolchain.passthru.availableComponents.rust-src}/lib/rustlib/src/rust/Cargo.lock"
             ];
           };
+
+          postInstall = ''
+            wrapProgram $out/bin/${pname} --prefix LD_LIBRARY_PATH : ${libPath}
+          '';
         });
       in
       {
@@ -115,9 +119,8 @@
 
         apps.default = flake-utils.lib.mkApp { drv = crate; };
 
-        devShells.default = craneLib.devShell rec {
-          checks = self.checks.${system};
-          LD_LIBRARY_PATH = lib.strings.makeLibraryPath commonArgs.buildInputs;
+        devShells.default = craneLib.devShell {
+          inputsFrom = builtins.attrValues self.checks;
         };
       }
     );
