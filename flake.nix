@@ -2,30 +2,41 @@
   description = "Build the cargo project while also compiling the standard library";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
 
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-analyzer-src.follows = "";
-    };
-
     flake-utils.url = "github:numtide/flake-utils";
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, crane, fenix, flake-utils, ... }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ (import rust-overlay) ];
+        };
         inherit (pkgs) lib;
 
-        craneLib = crane.mkLib pkgs;
+        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [ "rust-src" ];
+        };
+
+        # NB: we don't need to overlay our custom toolchain for the *entire*
+        # pkgs (which would require rebuidling anything else which uses rust).
+        # Instead, we just want to update the scope that crane will use by appending
+        # our specific toolchain there.
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+
+        # Clean the source with slint files as well as the default filterCargoSources
         src = lib.cleanSourceWith {
           src = ./.;
           filter = path: type:
@@ -42,7 +53,7 @@
             openssl
           ];
 
-          runtimeDependencies = with pkgs; [
+          buildInputs = with pkgs; [
             libxkbcommon
             fontconfig
 
@@ -57,31 +68,57 @@
           ];
         };
 
-        craneLibLLvmTols = craneLib.overrideToolchain (fenix.packages.${system}.complete.withComponents [
-          "cargo"
-          "llvm-tools"
-          "rustc"
-          "rust-src"
-        ]);
-
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        slint-rust-calculator = craneLib.buildPackage (commonArgs // {
+        crate = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
-          inherit (craneLib.crateNameFromCargoToml { inherit src; }) version;
-          #doCheck = false;
+
+          cargoVendorDir = craneLib.vendorMultipleCargoDeps {
+            inherit (craneLib.findCargoFiles src) cargoConfigs;
+            cargoLockList = [
+              ./Cargo.lock
+
+              # Unfortunately this approach requires IFD (import-from-derivation)
+              # otherwise Nix will refuse to read the Cargo.lock from our toolchain
+              # (unless we build with `--impure`).
+              #
+              # Another way around this is to manually copy the rustlib `Cargo.lock`
+              # to the repo and import it with `./path/to/rustlib/Cargo.lock` which
+              # will avoid IFD entirely but will require manually keeping the file
+              # up to date!
+              "${rustToolchain.passthru.availableComponents.rust-src}/lib/rustlib/src/rust/Cargo.lock"
+            ];
+          };
         });
       in
       {
-        checks = { inherit slint-rust-calculator; };
+        checks = {
+          # Build the crate as part of `nix flake check` for convenience
+          inherit crate;
 
-        packages.default = slint-rust-calculator;
+          # Run clippy (and deny all warnings) on the crate source,
+          # again, reusing the dependency artifacts from above.
+          #
+          # Note that this is done as a separate derivation so that
+          # we can block the CI if there are issues here, but not
+          # prevent downstream consumers from building our crate by itself.
+          crate-clippy = craneLib.cargoClippy (commonArgs // {
+            inherit cargoArtifacts;
+            cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+          });
 
-        apps.default = flake-utils.lib.mkApp { drv = slint-rust-calculator; };
+          # Check formatting
+          crate-cargofmt = craneLib.cargoFmt { inherit src; };
+        };
+
+        packages.default = crate;
+
+        apps.default = flake-utils.lib.mkApp { drv = crate; };
 
         devShells.default = craneLib.devShell rec {
-          inputsFrom = builtins.attrValues self.checks.${system};
-          LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath (builtins.concatMap (d: d.runtimeDependencies) inputsFrom);
+          checks = self.checks.${system};
+          LD_LIBRARY_PATH = lib.strings.makeLibraryPath commonArgs.buildInputs;
         };
-      });
+      }
+    );
 }
