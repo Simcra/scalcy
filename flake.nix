@@ -55,8 +55,6 @@
           xorg.libXi
         ];
 
-
-
         commonArgs = {
           inherit src pname;
           strictDeps = true;
@@ -121,6 +119,7 @@
 
         devShells.default = craneLib.devShell {
           inputsFrom = builtins.attrValues self.checks;
+          LD_LIBRARY_PATH = libPath;
         };
       }
     );
