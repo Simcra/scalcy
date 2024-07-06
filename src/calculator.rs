@@ -1,18 +1,25 @@
+use std::collections::VecDeque;
+
 use crate::{Lexer, Parser};
 
 #[derive(Debug, Default)]
 pub struct Calculator {
     input: String,
     result: String,
+    history: VecDeque<String>,
 }
 
 impl Calculator {
     pub fn input(&self) -> &str {
-        return self.input.as_str();
+        self.input.as_str()
     }
 
     pub fn result(&self) -> &str {
-        return self.result.as_str();
+        self.result.as_str()
+    }
+
+    pub fn history(&self) -> &VecDeque<String> {
+        &self.history
     }
 
     pub fn append(&mut self, input: &str) {
@@ -23,7 +30,7 @@ impl Calculator {
             return;
         }
 
-        self.input.push_str(input);
+        self.input.push_str(input)
     }
 
     pub fn pop(&mut self) -> Option<char> {
@@ -31,11 +38,21 @@ impl Calculator {
     }
 
     pub fn store(&mut self) {
-        self.input = self.result.clone();
+        if self.input.eq_ignore_ascii_case(&self.result) {
+            return;
+        }
+
+        if self.history.len() >= 5 {
+            self.history.pop_back();
+        }
+        let last_calculation = self.result.clone() + " = " + self.input.as_str();
+        self.history.push_front(last_calculation);
+
+        self.input = self.result.clone()
     }
 
     pub fn clear(&mut self) {
-        self.input = String::from("0");
+        self.input = String::from("0")
     }
 
     pub fn calculate(&mut self) {
@@ -55,6 +72,6 @@ impl Calculator {
 
         // Do the calculation and update the GUI
         let expr = parser_result.unwrap();
-        self.result = expr.solve().to_string();
+        self.result = expr.solve().to_string()
     }
 }

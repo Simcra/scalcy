@@ -8,11 +8,11 @@ use std::{
 
 use calculator::*;
 use parsetree::*;
-use slint::SharedString;
+use slint::{ModelRc, SharedString, VecModel};
 
 slint::include_modules!();
 
-fn handle_key_press(ui: AppWindow, calculator: &mut RefMut<Calculator>, value: &str) {
+fn handle_key_press(ui: MainWindow, calculator: &mut RefMut<Calculator>, value: &str) {
     match value {
         "\x08" => {
             // BACKSPACE key
@@ -34,17 +34,24 @@ fn handle_key_press(ui: AppWindow, calculator: &mut RefMut<Calculator>, value: &
     };
 
     ui.set_input(SharedString::from(calculator.input()));
+    ui.set_history(ModelRc::new(VecModel::from(
+        calculator
+            .history()
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<SharedString>>(),
+    )));
     ui.set_result(SharedString::from(calculator.result()));
 }
 
 fn main() -> Result<(), slint::PlatformError> {
-    let ui = AppWindow::new()?;
+    let ui = MainWindow::new()?;
     let calculator = Rc::new(RefCell::new(Calculator::default()));
 
-    ui.global::<AppLogic>()
+    ui.global::<CalcLogic>()
         .on_is_empty(|value| value.is_empty());
 
-    ui.global::<AppLogic>().on_key_pressed({
+    ui.global::<CalcLogic>().on_key_pressed({
         let ui_weak = ui.as_weak();
         let calculator_weak = calculator.clone();
         move |value| {

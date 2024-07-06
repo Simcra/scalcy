@@ -1,6 +1,6 @@
 import { VerticalBox } from "std-widgets.slint";
 
-export global AppLogic {
+export global CalcLogic {
     callback is-empty(string) -> bool;
     callback key-pressed(string);
 }
@@ -11,35 +11,37 @@ component CalcButton {
     min-height: 30px;
     max-height: 30px;
     min-width: 30px;
-    in property <brush> background: #a3b4cf;
+    in property <brush> background: #09aab0;
     Rectangle {
-        background: ta.pressed ? blue : ta.has-hover ? background.darker(10%) : background;
+        background: ta.pressed ? background.darker(40%) : ta.has-hover ? background.darker(10%) : background;
         animate background { duration: 100ms; }
         border-radius: 4px;
         border-width: 2px;
         border-color: self.background.darker(20%);
         ta := TouchArea {
-            clicked => { AppLogic.key-pressed(AppLogic.is-empty(root.key) ? root.text : root.key); }
+            clicked => { CalcLogic.key-pressed(CalcLogic.is-empty(root.key) ? root.text : root.key); }
         }
     }
     Text { text: root.text; }
 }
 
-export component AppWindow inherits Window {
+export component MainWindow inherits Window {
     title: @tr("SCalcy");
     in property <string> input: "0";
     in property <string> result: "0";
+    in property <[string]> history: [];
 
-    FocusScope { key-pressed(event) => { AppLogic.key-pressed(event.text); accept } }
+    FocusScope { key-pressed(event) => { CalcLogic.key-pressed(event.text); accept } }
     GridLayout {
         padding: 10px;
         spacing: 5px;
-        Row {
-            Text { text: result; colspan: 5; }
-        }
-        Row {
-            Text { text: input; colspan: 5; }
-        }
+        Row { Text { text: history[4]; colspan: 5; horizontal-alignment: right; } }
+        Row { Text { text: history[3]; colspan: 5; horizontal-alignment: right; } }
+        Row { Text { text: history[2]; colspan: 5; horizontal-alignment: right; } }
+        Row { Text { text: history[1]; colspan: 5; horizontal-alignment: right; } }
+        Row { Text { text: history[0]; colspan: 5; horizontal-alignment: right; } }
+        Row { Text { text: result; colspan: 5; } }
+        Row { Text { text: input; colspan: 5; horizontal-alignment: right; } }
         Row {
             CalcButton { text: "C"; key: "\u{7f}"; }
             CalcButton { text: "("; }
